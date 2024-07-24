@@ -59,7 +59,7 @@ on:
       source_branch:
         description: "Select the source branch"
         required: false
-        default: "openwrt-main"
+        default: "lede-master"
         type: choice
         options:
           - openwrt-main
@@ -164,6 +164,7 @@ jobs:
           chmod +x ${DIY_P2_SH}
           cd openwrt/
           ${GITHUB_WORKSPACE}/${DIY_P2_SH}
+          
       - name: 使用原厂MAC地址顺序
         if: github.event.inputs.MAC_ORDER == 'true'
         run: |
