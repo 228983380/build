@@ -12,11 +12,11 @@ on:
       MAC_ORDER:
         description: '使用官方原始MAC地址顺序'
         required: false
-        default: true
+        default: false
         type: boolean
       WA_FW:
         description: '选择wifi固件'
-        required: true
+        required: false
         default: 'mt7986-fw-jdc'
         type: choice
         options:
@@ -357,7 +357,18 @@ jobs:
           echo "- 构建使用源码：${{ env.REPO_URL }}" >> release.txt
           echo "- 后台登录地址：${{ env.IP_ADDR }}" >> release.txt
           echo "## 固件特点" >> release.txt
+          if [[ "${{ env.MAC_FIX }}" == '-MAC_fix' ]]; then
+                 echo "- 1. 使用原厂的MAC地址顺序" >> release.txt
+          else
+                 echo "- 1. 未修改源码中的MAC地址顺序，网卡序号倒序" >> release.txt
+          fi
           echo "- mt_wifi firmware: ${{ env.WA_FW }}" >> release.txt
+          echo "- &ensp;&ensp;warp firmware: ${{ env.WO_FW }}" >> release.txt
+          if [[ "${{ env.SWITCH }}" == '-gsw' ]]; then
+                 echo "- 2. 使用GSW交换机驱动（非DSA）" >> release.txt
+          else
+                 echo "- 2. 使用DSA交换机驱动" >> release.txt
+          fi
           if [[ "${{ env.WIFI_INTERFACE }}" == '-mtwifi' ]]; then
                   echo "- 3. 使用hanwckf mtwifi-cfg原生luci无线配置工具" >> release.txt
           else
