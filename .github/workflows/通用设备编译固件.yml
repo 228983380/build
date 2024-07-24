@@ -197,6 +197,11 @@ jobs:
           [ -s TARGET_NAME ] && echo "TARGET_NAME=$(cat TARGET_NAME)" >> $GITHUB_ENV
           sed -nE 's/.*(192.168\.[0-9]+\.[0-9]+).*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
           [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
+          if grep -q 'CONFIG_MTK_MT7986_NEW_FW=y' .config; then
+                  echo "WA_FW=$(grep 'MT7986_FW_DIR :=' package/lean/mt/drivers/mt_wifi/Makefile | awk -F' ' '{print $3}')" >> $GITHUB_ENV
+          else
+                  echo "WA_FW=no-new-fw" >> $GITHUB_ENV
+          fi
           if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' .config; then
                   echo "WIFI_INTERFACE=-mtwifi" >> $GITHUB_ENV
           else
@@ -246,7 +251,25 @@ jobs:
           touch release.txt
           [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
           [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
-          echo "::set-output name=status::success"
+          echo "# 本次固件详情" >> release.txt
+          echo "## 基本信息" >> release.txt
+          echo "- 构建使用源码：${{ env.REPO_URL }}" >> release.txt
+          echo "- 后台登录地址：${{ env.IP_ADDR }}" >> release.txt
+          echo "## 固件特点" >> release.txt
+          echo "- mt_wifi firmware: ${{ env.WA_FW }}" >> release.txt
+          if [[ "${{ env.WIFI_INTERFACE }}" == '-mtwifi' ]]; then
+                  echo "- 3. 使用hanwckf mtwifi-cfg原生luci无线配置工具" >> release.txt
+          else
+                  echo "- 3. 使用mtk-sdk luci-app-mtk无线配置工具" >> release.txt
+          fi
+          if [[ "${{ env.BUILD_DOCKERMAN }}" == '-docker' ]]; then
+                  echo "- 4. 已编译luci-app-dockerman" >> release.txt
+          else
+                  echo "- 4. 未编译luci-app-dockerman" >> release.txt
+          echo "还有很多，不一一列举" >> release.txt
+          fi
+          echo "release_tag=${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.DEVICE_NAME }}${{ env.SWITCH }}${{ env.WIFI_INTERFACE }}${{ env.BUILD_DOCKERMAN }}" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 发布固件至Release
         uses: softprops/action-gh-release@v1
