@@ -9,34 +9,6 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      WA_FW:
-        description: '选择wifi固件'
-        required: true
-        default: 'mt7986-fw-jdc'
-        type: choice
-        options:
-        - no-new-fw
-        - mt7986-fw-20221208
-        - mt7986-fw-jdc
-        - mt7986-fw-20230421
-        - mt7986-fw-20230808
-        - mt7986-fw-20231024
-      WO_FW:
-        description: '选择warp固件'
-        required: true
-        default: 'mt7986-fw-jdc'
-        type: choice
-        options:
-        - no-new-fw
-        - mt7986-fw-jdc
-        - mt7986-fw-20230421
-        - mt7986-fw-20230808
-        - mt7986-fw-20231024
-      GSW:
-        description: '交换机模式使用GSW驱动（默认是DSA）'
-        required: true
-        default: false
-        type: boolean
       APP_MTK:
         description: '使用旧的luci-app-mtk无线配置工具'
         required: true
@@ -160,32 +132,6 @@ jobs:
           cd openwrt/
           ${GITHUB_WORKSPACE}/${DIY_P2_SH}
           
-      - name: 选择无线firmware
-        run: |
-          mkdir -p openwrt/package/mtk/drivers/mt_wifi/files
-          cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/mtk/drivers/mt_wifi/files
-          cp -r JDCloud-AX6000-Baili/firmware/warp/mt7986-fw-jdc openwrt/package/mtk/drivers/warp/files
-          cd openwrt
-          if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
-                  sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-          else
-                  sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/mtk/drivers/mt_wifi/Makefile
-          fi
-          if [ ${{ github.event.inputs.WO_FW }} == 'no-new-fw' ]; then
-                  sed -i '/CONFIG_WARP_NEW_FW=y/d' .config
-          else
-                  sed -i 's/^MT7986_NEW_WOFW_DIR := mt7986-fw.*/MT7986_NEW_WOFW_DIR := ${{github.event.inputs.WO_FW}}/g' package/mtk/drivers/warp/Makefile
-          fi
-          
-      - name: 使用GSW交换机驱动（非DSA）
-        if: github.event.inputs.GSW == 'true'
-        run: |
-          mkdir -p openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek
-          cp JDCloud-AX6000-Baili/mt7986a-gsw-jdcloud-re-cp-03.dts openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7986a-jdcloud-re-cp-03.dts
-          cd openwrt
-          sed -i '/jdcloud,re-cp-03)/ {n; /lan1 lan2 lan3 lan4/ {s/lan1 lan2 lan3 lan4/eth0/; a\
-          \t\tucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "6u@eth0"
-          }}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
       
       - name: 使用luci-app-mtk无线配置
         if: github.event.inputs.APP_MTK == 'true'
@@ -230,26 +176,6 @@ jobs:
           [ -s TARGET_NAME ] && echo "TARGET_NAME=$(cat TARGET_NAME)" >> $GITHUB_ENV
           sed -nE 's/.*(192.168\.[0-9]+\.[0-9]+).*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
           [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
-          if sed -n '/jdcloud,re-cp-03)/,/;;/p' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network | grep -q 'wan_mac=$(mmc_get_mac_binary factory 0x24)'; then
-                  echo "MAC_FIX=-MAC_fix" >> $GITHUB_ENV
-          else
-                  echo "MAC_FIX=" >> $GITHUB_ENV
-          fi
-          if grep -q 'CONFIG_MTK_MT7986_NEW_FW=y' .config; then
-                  echo "WA_FW=$(grep 'MT7986_FW_DIR :=' package/mtk/drivers/mt_wifi/Makefile | awk -F' ' '{print $3}')" >> $GITHUB_ENV
-          else
-                  echo "WA_FW=no-new-fw" >> $GITHUB_ENV
-          fi
-          if grep -q 'CONFIG_WARP_NEW_FW=y' .config; then
-                  echo "WO_FW=$(grep 'MT7986_NEW_WOFW_DIR :=' package/mtk/drivers/warp/Makefile | awk -F' ' '{print $3}')" >> $GITHUB_ENV
-          else
-                  echo "WO_FW=no-new-fw" >> $GITHUB_ENV
-          fi
-          if sed -n '/jdcloud,re-cp-03)/,/;;/p' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network | grep -q 'ucidef_add_switch "switch0"'; then
-                  echo "SWITCH=-gsw" >> $GITHUB_ENV
-          else
-                  echo "SWITCH=" >> $GITHUB_ENV
-          fi
           if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' .config; then
                   echo "WIFI_INTERFACE=-mtwifi" >> $GITHUB_ENV
           else
