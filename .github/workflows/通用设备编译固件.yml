@@ -9,11 +9,6 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      MAC_ORDER:
-        description: '使用官方原始MAC地址顺序'
-        required: true
-        default: true
-        type: boolean
       WA_FW:
         description: '选择wifi固件'
         required: true
