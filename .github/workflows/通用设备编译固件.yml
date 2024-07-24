@@ -3,12 +3,59 @@
 # Description: Build OpenWrt
 #============================================================================================
 
-name: 通用设备编译固件
+name: JDCloud-AX6000-Baili固件编译
 
 on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
+      MAC_ORDER:
+        description: '使用官方原始MAC地址顺序'
+        required: true
+        default: true
+        type: boolean
+      WA_FW:
+        description: '选择wifi固件'
+        required: true
+        default: 'mt7986-fw-jdc'
+        type: choice
+        options:
+        - no-new-fw
+        - mt7986-fw-20221208
+        - mt7986-fw-jdc
+        - mt7986-fw-20230421
+        - mt7986-fw-20230808
+        - mt7986-fw-20231024
+      WO_FW:
+        description: '选择warp固件'
+        required: true
+        default: 'mt7986-fw-jdc'
+        type: choice
+        options:
+        - no-new-fw
+        - mt7986-fw-jdc
+        - mt7986-fw-20230421
+        - mt7986-fw-20230808
+        - mt7986-fw-20231024
+      GSW:
+        description: '交换机模式使用GSW驱动（默认是DSA）'
+        required: true
+        default: false
+        type: boolean
+      APP_MTK:
+        description: '使用旧的luci-app-mtk无线配置工具'
+        required: true
+        default: false
+        type: boolean
+      NO_DOCKERMAN:
+        description: '不构建dockerman'
+        required: true
+        default: false
+        type: boolean
+      ssh:
+        description: '通过SSH连接到Actions'
+        required: false
+        default: 'false'
       source_branch:
         description: "Select the source branch"
         required: false
@@ -28,6 +75,7 @@ env:
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
+  SSH_ACTIONS: false
   TZ: Asia/Shanghai
 
 jobs:
@@ -36,10 +84,10 @@ jobs:
     if: ${{ github.event.repository.owner.id }} == ${{ github.event.sender.id }}
 
     steps:
-      - name: Checkout
+      - name: 检查项目分支
         uses: actions/checkout@main
 
-      - name: Initialization environment
+      - name: 初始化编译环境
         id: init
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -59,7 +107,7 @@ jobs:
           sudo timedatectl set-timezone "${TZ}"
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Clone source code [ ${{ inputs.source_branch }} ]
+      - name: 下载固件源码 [ ${{ inputs.source_branch }} ]
         id: codes
         working-directory: /workdir
         if: ${{ steps.init.outputs.status }} == 'success' && !cancelled()
@@ -96,28 +144,89 @@ jobs:
           df -hT ${PWD}
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Load custom feeds
+      - name: 加载feeds.conf.default & DIY_P1_SH
         run: |
           [[ -f "${FEEDS_CONF}" ]] && cp -f ${FEEDS_CONF} openwrt/feeds.conf.default
           chmod +x ${DIY_P1_SH}
           cd openwrt/
           ${GITHUB_WORKSPACE}/${DIY_P1_SH}
 
-      - name: Update feeds
+      - name: 更新feeds
         run: cd openwrt/ && ./scripts/feeds update -a
 
-      - name: Install feeds
+      - name: 安装feeds
         run: cd openwrt/ && ./scripts/feeds install -a
 
-      - name: Load custom configuration
+      - name: 加载config & DIY_P2_SH
         run: |
           [[ -d "files" ]] && mv -f files openwrt/files
           [[ -e "${CONFIG_FILE}" ]] && cp -f ${CONFIG_FILE} openwrt/.config
           chmod +x ${DIY_P2_SH}
           cd openwrt/
           ${GITHUB_WORKSPACE}/${DIY_P2_SH}
+      - name: 使用原厂MAC地址顺序
+        if: github.event.inputs.MAC_ORDER == 'true'
+        run: |
+          cd openwrt
+          ## 调换lan、wan的MAC地址
+          sed -i '/jdcloud,re-cp-03)/{n; s/wan_mac=$(mmc_get_mac_binary factory 0x2a)/wan_mac=$(mmc_get_mac_binary factory 0x24)/; n; s/lan_mac=$(mmc_get_mac_binary factory 0x24)/lan_mac=$(mmc_get_mac_binary factory 0x2A)/}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
+          ## 创建一个辅助文件。文件内容是写入MAC地址到dat文件，固定wifi MAC地址
+          echo -e "\t\tlocal wifi0_mac=\"\$(mmc_get_mac_binary factory 0x04)\"
+          \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi0_mac/;b;}; \\\$aMacAddress=\$wifi0_mac\" /etc/wireless/mediatek/mt7986-ax6000.dbdc.b0.dat
+          \t\tlocal wifi1_mac=\"\$(macaddr_setbit_la \$wifi0_mac)\"
+          \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi1_mac/;b;}; \\\$aMacAddress=\$wifi1_mac\" /etc/wireless/mediatek/mt7986-ax6000.dbdc.b1.dat" > temp_insert.txt
+          ## 将文本内容写入02_network
+          sed -i '/mediatek_setup_macs()/,/\};/ {/jdcloud,re-cp-03)/ {n;n;n;r temp_insert.txt
+          }}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
+          
+      - name: 选择无线firmware
+        run: |
+          cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/mtk/drivers/mt_wifi/files
+          cp -r JDCloud-AX6000-Baili/firmware/warp/mt7986-fw-jdc openwrt/package/mtk/drivers/warp/files
+          cd openwrt
+          if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
+                  sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
+          else
+                  sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/mtk/drivers/mt_wifi/Makefile
+          fi
+          if [ ${{ github.event.inputs.WO_FW }} == 'no-new-fw' ]; then
+                  sed -i '/CONFIG_WARP_NEW_FW=y/d' .config
+          else
+                  sed -i 's/^MT7986_NEW_WOFW_DIR := mt7986-fw.*/MT7986_NEW_WOFW_DIR := ${{github.event.inputs.WO_FW}}/g' package/mtk/drivers/warp/Makefile
+          fi
+          
+      - name: 使用GSW交换机驱动（非DSA）
+        if: github.event.inputs.GSW == 'true'
+        run: |
+          cp JDCloud-AX6000-Baili/mt7986a-gsw-jdcloud-re-cp-03.dts openwrt/target/linux/mediatek/files-5.4/arch/arm64/boot/dts/mediatek/mt7986a-jdcloud-re-cp-03.dts
+          cd openwrt
+          sed -i '/jdcloud,re-cp-03)/ {n; /lan1 lan2 lan3 lan4/ {s/lan1 lan2 lan3 lan4/eth0/; a\
+          \t\tucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "6u@eth0"
+          }}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
+      
+      - name: 使用luci-app-mtk无线配置
+        if: github.event.inputs.APP_MTK == 'true'
+        run: |
+          cd openwrt
+          sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+          
+      - name: 取消编译dockerman
+        if: github.event.inputs.NO_DOCKERMAN == 'true'
+        run: |
+          cd openwrt
+          sed -i '/CONFIG_PACKAGE_luci-app-dockerman=y/d' .config
+          
+      - name: SSH链接管理
+        uses: P3TERX/ssh2actions@v1.0.0
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+        env:
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-      - name: Download package
+      - name: 下载安装包
         id: package
         run: |
           cd openwrt/
@@ -126,27 +235,64 @@ jobs:
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
 
-      - name: Compile the OpenWrt
+      - name: 编译固件
         id: compile
         run: |
-          cd openwrt/
+          cd openwrt
           echo -e "$(nproc) thread compile"
-          make -j$(($(nproc) + 1)) V=s || make -j1 || make -j1 V=s
-          echo "status=success" >> ${GITHUB_OUTPUT}
+          make -j$(nproc) || make -j1 || make -j1 V=s
+          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+          [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
+          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*TARGET_.*_(.*)_DEVICE_.*=y/\1/' > TARGET_NAME
+          [ -s TARGET_NAME ] && echo "TARGET_NAME=$(cat TARGET_NAME)" >> $GITHUB_ENV
+          sed -nE 's/.*(192.168\.[0-9]+\.[0-9]+).*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
+          [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
+          if sed -n '/jdcloud,re-cp-03)/,/;;/p' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network | grep -q 'wan_mac=$(mmc_get_mac_binary factory 0x24)'; then
+                  echo "MAC_FIX=-MAC_fix" >> $GITHUB_ENV
+          else
+                  echo "MAC_FIX=" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_MTK_MT7986_NEW_FW=y' .config; then
+                  echo "WA_FW=$(grep 'MT7986_FW_DIR :=' package/mtk/drivers/mt_wifi/Makefile | awk -F' ' '{print $3}')" >> $GITHUB_ENV
+          else
+                  echo "WA_FW=no-new-fw" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_WARP_NEW_FW=y' .config; then
+                  echo "WO_FW=$(grep 'MT7986_NEW_WOFW_DIR :=' package/mtk/drivers/warp/Makefile | awk -F' ' '{print $3}')" >> $GITHUB_ENV
+          else
+                  echo "WO_FW=no-new-fw" >> $GITHUB_ENV
+          fi
+          if sed -n '/jdcloud,re-cp-03)/,/;;/p' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network | grep -q 'ucidef_add_switch "switch0"'; then
+                  echo "SWITCH=-gsw" >> $GITHUB_ENV
+          else
+                  echo "SWITCH=" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' .config; then
+                  echo "WIFI_INTERFACE=-mtwifi" >> $GITHUB_ENV
+          else
+                  echo "WIFI_INTERFACE=" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_PACKAGE_luci-app-dockerman=y' .config; then
+                  echo "BUILD_DOCKERMAN=-docker" >> $GITHUB_ENV
+          else
+                  echo "BUILD_DOCKERMAN=" >> $GITHUB_ENV
+          fi
+          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
 
 
-      - name: Check space usage
+      - name: 查看磁盘使用情况
         if: (!cancelled())
         run: df -hT
 
-      - name: Upload bin directory
+      - name: 上传BIN目录
         uses: actions/upload-artifact@main
         if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
         with:
           name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
           path: openwrt/bin
 
-      - name: Organize files
+      - name: 整理文件
         id: organize
         if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
         run: |
@@ -155,14 +301,14 @@ jobs:
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "::set-output name=status::success"
 
-      - name: Upload firmware directory
+      - name: 打包上传固件到Actions Artifacts
         uses: actions/upload-artifact@main
         if: steps.organize.outputs.status == 'success' && !cancelled()
         with:
           name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
           path: ${{ env.FIRMWARE }}
 
-      - name: Generate release tag
+      - name: 生成固件Release标签
         id: tag
         if: env.UPLOAD_RELEASE == 'true' && !cancelled()
         run: |
@@ -172,7 +318,7 @@ jobs:
           [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
           echo "::set-output name=status::success"
 
-      - name: Upload firmware to release
+      - name: 发布固件至Release
         uses: softprops/action-gh-release@v1
         if: steps.tag.outputs.status == 'success' && !cancelled()
         env:
