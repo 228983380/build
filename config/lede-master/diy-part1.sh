@@ -12,7 +12,9 @@
 
 # Uncomment a feed source
 #sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
-rm -rf package/lean/{luci-theme-argon,ddns-scripts_aliyun,ddns-scripts_dnspod}
+rm -rf package/lean/luci-theme-argon && echo "已删除 luci-theme-argon"
+rm -rf package/lean/ddns-scripts_aliyun && echo "已删除 ddns-scripts_aliyun"
+rm -rf package/lean/ddns-scripts_dnspod && echo "已删除 ddns-scripts_dnspod"
 # Add a feed source
 #echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
 #echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
