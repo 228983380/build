@@ -17,7 +17,7 @@ on:
       WA_FW:
         description: '选择wifi固件'
         required: true
-        default: 'mt7986-fw-jdc'
+        default: 'no-new-fw'
         type: choice
         options:
         - no-new-fw
@@ -29,7 +29,7 @@ on:
       WO_FW:
         description: '选择warp固件'
         required: true
-        default: 'mt7986-fw-jdc'
+        default: 'no-new-fw'
         type: choice
         options:
         - no-new-fw
