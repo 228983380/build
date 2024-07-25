@@ -14,6 +14,8 @@
 #sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
 
 rm -rf package/lean/luci-theme-argon
+ddns-scripts_aliyun
+ddns-scripts_dnspod
 
 # Add a feed source
 #echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
