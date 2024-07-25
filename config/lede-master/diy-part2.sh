@@ -32,6 +32,7 @@ echo "DISTRIB_SOURCECODE='lede'" >>package/base-files/files/etc/openwrt_release
 # svn co https://github.com/ophub/luci-app-amlogic/trunk/luci-app-amlogic package/luci-app-amlogic
 
 # Fix runc version error
+rm -rf ./feeds/packages/net/ddns-scripts
 # rm -rf ./feeds/packages/utils/runc/Makefile
 # svn export https://github.com/openwrt/packages/trunk/utils/runc/Makefile ./feeds/packages/utils/runc/Makefile
 
