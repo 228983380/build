@@ -28,7 +28,7 @@ on:
         - mt7986-fw-20231024
       WO_FW:
         description: '选择warp固件'
-        required: false
+        required: true
         default: 'mt7986-fw-jdc'
         type: choice
         options:
@@ -39,7 +39,7 @@ on:
         - mt7986-fw-20231024
       GSW:
         description: '交换机模式使用GSW驱动（默认是DSA）'
-        required: false
+        required: true
         default: false
         type: boolean
       APP_MTK:
@@ -58,7 +58,7 @@ on:
         default: 'false'
       source_branch:
         description: "Select the source branch"
-        required: false
+        required: true
         default: "lede-master"
         type: choice
         options:
