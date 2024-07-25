@@ -11,7 +11,7 @@ on:
     inputs:
       MAC_ORDER:
         description: '使用官方原始MAC地址顺序'
-        required: false
+        required: true
         default: false
         type: boolean
       WA_FW:
@@ -57,7 +57,7 @@ on:
         required: false
         default: 'false'
       source_branch:
-        description: "Select the source branch"
+        description: "选择编译源码"
         required: true
         default: "lede-master"
         type: choice
