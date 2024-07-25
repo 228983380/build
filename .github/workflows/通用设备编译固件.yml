@@ -200,16 +200,9 @@ jobs:
                       sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/lean/mt/drivers/mt_wifi/Makefile
               fi
           elif [[ "${{ inputs.source_branch }}" == *"lede"* ]]; then
-              #cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/lean/mt/drivers/mt_wifi/files
               cd openwrt
               sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
               echo "这个源码不存在这个操作，跳过"
-              #if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
-              #        sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-              #else
-              #        sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/lean/mt/drivers/mt_wifi/Makefile
-              #        echo "lede WIFI固件已更新"
-              fi
           elif [[ "${{ inputs.source_branch }}" == *"immortalwrt"* ]]; then
               cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/lean/mt/drivers/mt_wifi/files
               cd openwrt
