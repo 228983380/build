@@ -185,7 +185,9 @@ jobs:
               ## 将文本内容写入02_network
               sed -i '/mediatek_setup_macs()/,/\};/ {/jdcloud,re-cp-03)/ {n;n;n;r temp_insert.txt
               }}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
-        
+          else
+              echo "这个源码不存在这个操作，跳过"
+          fi
 
       - name: 选择无线firmware
         run: |
@@ -244,6 +246,10 @@ jobs:
               else
                       sed -i 's/^MT7986_NEW_WOFW_DIR := mt7986-fw.*/MT7986_NEW_WOFW_DIR := ${{github.event.inputs.WO_FW}}/g' package/mtk/drivers/warp/Makefile
               fi
+          else
+              echo "这个源码不存在这个操作，跳过"
+          fi
+
               
       - name: 使用GSW交换机驱动（非DSA）
         if: github.event.inputs.GSW == 'true'
@@ -254,7 +260,10 @@ jobs:
               sed -i '/jdcloud,re-cp-03)/ {n; /lan1 lan2 lan3 lan4/ {s/lan1 lan2 lan3 lan4/eth0/; a\
               \t\tucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "6u@eth0"
               }}' target/linux/mediatek/mt7986/base-files/etc/board.d/02_network
-        
+          else
+              echo "这个源码不存在这个操作，跳过"
+          fi
+
       - name: 使用luci-app-mtk无线配置
         if: github.event.inputs.APP_MTK == 'true'
         run: |
