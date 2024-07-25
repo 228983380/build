@@ -247,12 +247,10 @@ jobs:
                       sed -i 's/^MT7986_NEW_WOFW_DIR := mt7986-fw.*/MT7986_NEW_WOFW_DIR := ${{github.event.inputs.WO_FW}}/g' package/mtk/drivers/warp/Makefile
               fi
           else
-              if [ ${{ github.event.inputs.WO_FW }} == 'no-new-fw' ]; then
-                      sed -i '/CONFIG_WARP_NEW_FW=y/d' .config
+              sed -i '/CONFIG_WARP_NEW_FW=y/d' .config
               echo "这个源码不存在这个操作，跳过"
           fi
 
-              
       - name: 使用GSW交换机驱动（非DSA）
         if: github.event.inputs.GSW == 'true'
         run: |
@@ -274,13 +272,13 @@ jobs:
           sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
           sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
           sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
-          
+
       - name: 取消编译dockerman
         if: github.event.inputs.NO_DOCKERMAN == 'true'
         run: |
           cd openwrt
           sed -i '/CONFIG_PACKAGE_luci-app-dockerman=y/d' .config
-          
+
       - name: SSH链接管理
         uses: P3TERX/ssh2actions@v1.0.0
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -326,7 +324,6 @@ jobs:
           fi
           echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
-
 
       - name: 查看磁盘使用情况
         if: (!cancelled())
