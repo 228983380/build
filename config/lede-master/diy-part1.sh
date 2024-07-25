@@ -10,6 +10,12 @@
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
 #
 
+# Uncomment a feed source
+#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+rm -rf package/lean/{luci-theme-argon,ddns-scripts_aliyun,ddns-scripts_dnspod}
+# Add a feed source
+#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
+#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
 git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git luci-theme-argon
 git clone https://github.com/sirpdboy/luci-app-lucky.git package/lucky
 git clone https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
