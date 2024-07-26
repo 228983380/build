@@ -192,25 +192,17 @@ jobs:
       - name: 选择无线firmware
         run: |
           if [[ "${{ inputs.source_branch }}" == *"openwrt"* ]]; then
-              cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/lean/mt/drivers/mt_wifi/files
               cd openwrt
-              if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
-                      sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-              else
-                      sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/lean/mt/drivers/mt_wifi/Makefile
-              fi
+              sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
+              echo "这个源码不存在这个操作，跳过"
           elif [[ "${{ inputs.source_branch }}" == *"lede"* ]]; then
               cd openwrt
               sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
               echo "这个源码不存在这个操作，跳过"
           elif [[ "${{ inputs.source_branch }}" == *"immortalwrt"* ]]; then
-              cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/lean/mt/drivers/mt_wifi/files
               cd openwrt
-              if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
-                      sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-              else
-                      sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/lean/mt/drivers/mt_wifi/Makefile
-              fi
+              sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
+              echo "这个源码不存在这个操作，跳过"
           elif [[ "${{ inputs.source_branch }}" == *"hanwckf"* ]]; then
               cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/mtk/drivers/mt_wifi/files
               cd openwrt
@@ -220,13 +212,9 @@ jobs:
                       sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/mtk/drivers/mt_wifi/Makefile
               fi
           elif [[ "${{ inputs.source_branch }}" == *"Lienol"* ]]; then
-              cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/lean/mt/drivers/mt_wifi/files
               cd openwrt
-              if [ ${{ github.event.inputs.WA_FW }} == 'no-new-fw' ]; then
-                      sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-              else
-                      sed -i 's/^MT7986_FW_DIR := mt7986-fw.*/MT7986_FW_DIR := ${{github.event.inputs.WA_FW}}/g' package/lean/mt/drivers/mt_wifi/Makefile
-              fi
+              sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
+              echo "这个源码不存在这个操作，跳过"
           else
               echo "Unknown source code repository."
               exit 1
