@@ -390,7 +390,7 @@ jobs:
       - name: 消息通知
         id: message
         run: |
-          curl 'https://wx.7ii.win/?form=system&content=%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1|Github%E4%B8%8A%E7%9A%84%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1%E5%B7%B2%E5%AE%8C%E6%88%90%EF%BC%8C%E5%8F%AF%E4%BB%A5%E7%99%BB%E5%BD%95%E6%9F%A5%E7%9C%8B%E5%95%A6|https://github.com/itq5/build/releases' > /dev/null 2>&1
+          curl 'https://wx.7ii.win/?form=system&content=%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1|%E5%9C%A8%22${{%20buildtime%20}}%22%E6%97%B6Github%E4%B8%8A%E7%BC%96%E8%AF%91%E7%9A%84%22${{%20inputs.source_branch%20}}%22%E5%9B%BA%E4%BB%B6%E7%BC%96%E8%AF%91%E5%B7%B2%E5%AE%8C%E6%88%90%EF%BC%8C%E8%AF%B7%E6%9F%A5%E7%9C%8B|https://github.com/itq5/build/releases' > /dev/null 2>&1
 
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
