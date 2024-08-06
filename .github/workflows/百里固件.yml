@@ -92,7 +92,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           buildtime=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
-          curl 'https://wx.7ii.win/?form=text&content=%E3%80%90%F0%9F%94%8A%E7%BC%96%E8%AF%91%E9%80%9A%E7%9F%A5%E3%80%91%0a%F0%9F%A4%A3%0a%E5%BD%93%E5%89%8D%E6%9C%89%E4%B8%80%E4%B8%AA%22${{%20inputs.source_branch%20}}%22%E5%9B%BA%E4%BB%B6%E4%BA%8E%22${{%20buildtime%20}}%22%E5%BC%80%E5%A7%8B%E7%BC%96%E8%AF%91%EF%BC%8C%E8%AF%B7%E7%9F%A5%E6%99%93%EF%BC%81%0a%3Ca%20href=%22https://github.com/itq5/build/releases%22%3E%E6%9F%A5%E7%9C%8B%E6%9B%B4%E5%A4%9A%3C/a%3E' > /dev/null 2>&1
+          curl 'https://wx.7ii.win/?form=text&content=%E3%80%90%F0%9F%94%8A%E7%BC%96%E8%AF%91%E9%80%9A%E7%9F%A5%E3%80%91%0a%F0%9F%A4%A3%0a%E5%BD%93%E5%89%8D%E6%9C%89%E4%B8%80%E4%B8%AA"${{ inputs.source_branch }}"%E5%9B%BA%E4%BB%B6%E4%BA%8E"${{ buildtime }}"E5%BC%80%E5%A7%8B%E7%BC%96%E8%AF%91%EF%BC%8C%E8%AF%B7%E7%9F%A5%E6%99%93%EF%BC%81%0a%3Ca%20href=%22https://github.com/itq5/build/releases%22%3E%E6%9F%A5%E7%9C%8B%E6%9B%B4%E5%A4%9A%3C/a%3E' > /dev/null 2>&1
           docker rmi `docker images -q`
           [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
           sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android 2>/dev/null
@@ -390,7 +390,7 @@ jobs:
       - name: 消息通知
         id: message
         run: |
-          curl 'https://wx.7ii.win/?form=system&content=%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1|%E5%9C%A8%22${{%20buildtime%20}}%22%E6%97%B6Github%E4%B8%8A%E7%BC%96%E8%AF%91%E7%9A%84%22${{%20inputs.source_branch%20}}%22%E5%9B%BA%E4%BB%B6%E7%BC%96%E8%AF%91%E5%B7%B2%E5%AE%8C%E6%88%90%EF%BC%8C%E8%AF%B7%E6%9F%A5%E7%9C%8B|https://github.com/itq5/build/releases' > /dev/null 2>&1
+          curl 'https://wx.7ii.win/?form=system&content=%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1|%E5%9C%A8"${{ buildtime }}"%E6%97%B6Github%E4%B8%8A%E7%BC%96%E8%AF%91%E7%9A%84"${{ inputs.source_branch }}"%E5%9B%BA%E4%BB%B6%E7%BC%96%E8%AF%91%E5%B7%B2%E5%AE%8C%E6%88%90%EF%BC%8C%E8%AF%B7%E6%9F%A5%E7%9C%8B|https://github.com/itq5/build/releases' > /dev/null 2>&1
 
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
