@@ -2,7 +2,7 @@
 # https://github.com/ophub/amlogic-s9xxx-openwrt
 # Description: Build OpenWrt
 #============================================================================================
-name:${{ inputs.source_branch }}
+name:百里编译
 
 on:
   repository_dispatch:
