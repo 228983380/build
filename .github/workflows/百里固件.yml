@@ -385,6 +385,11 @@ jobs:
           body_path: release.txt
           files: ${{ env.FIRMWARE }}/*
 
+      - name: 消息通知
+        id: message
+        run: |
+          curl 'https://wx.7ii.win/?form=system&content=编译任务|Github上的编译任务已完成，可以登录查看啦|https://github.com/itq5/build/releases' > /dev/null 2>&1
+
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
         with:
