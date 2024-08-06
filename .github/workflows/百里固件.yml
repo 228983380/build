@@ -202,7 +202,8 @@ jobs:
           elif [[ "${{ inputs.source_branch }}" == *"immortalwrt"* ]]; then
               cd openwrt
               sed -i '/CONFIG_MTK_MT7986_NEW_FW=y/d' .config
-              echo "这个源码不存在这个操作，跳过"
+              cp JDCloud-AX6000-Baili/mt7986a-jdcloud-re-cp-03.dts openwrt/target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7986a-jdcloud-re-cp-03.dts
+              echo "这个源码只刷新了dts，其他跳过"
           elif [[ "${{ inputs.source_branch }}" == *"hanwckf"* ]]; then
               cp -r JDCloud-AX6000-Baili/firmware/mt_wifi/mt7986-fw-jdc openwrt/package/mtk/drivers/mt_wifi/files
               cd openwrt
