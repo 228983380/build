@@ -91,7 +91,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          curl 'https://wx.7ii.win/?form=system&content=编译任务通知|当前在Github上有一个"${{ inputs.source_branch }}"固件开始编译，请注意！|https://github.com/itq5/build/releases' > /dev/null 2>&1
+          curl 'https://wx.7ii.win/?form=system&content=编译任务开始|当前在Github上有一个"${{ inputs.source_branch }}"固件开始编译，请注意！|https://github.com/itq5/build/releases' > /dev/null 2>&1
           docker rmi `docker images -q`
           [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
           sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android 2>/dev/null
@@ -389,7 +389,7 @@ jobs:
       - name: 消息通知
         id: message
         run: |
-          curl 'https://wx.7ii.win/?form=system&content=%E7%BC%96%E8%AF%91%E4%BB%BB%E5%8A%A1|%E5%9C%A8"$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")"%E6%97%B6Github%E4%B8%8A%E7%BC%96%E8%AF%91%E7%9A%84"${{ inputs.source_branch }}"%E5%9B%BA%E4%BB%B6%E7%BC%96%E8%AF%91%E5%B7%B2%E5%AE%8C%E6%88%90%EF%BC%8C%E8%AF%B7%E6%9F%A5%E7%9C%8B|https://github.com/itq5/build/releases' > /dev/null 2>&1
+          curl 'https://wx.7ii.win/?form=system&content=编译任务结束|"${{ inputs.source_branch }}"固件编译已结束，请注意！|https://github.com/itq5/build/releases' > /dev/null 2>&1
 
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
